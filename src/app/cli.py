@@ -1,6 +1,6 @@
-from __future__ import annotations
-
 import argparse
+from pathlib import Path
+import sys
 
 from app.graph import ShoppingAssistant
 
@@ -15,16 +15,34 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    sys.stdout.reconfigure(encoding='utf-8')
     args = build_parser().parse_args()
     assistant = ShoppingAssistant()
 
-    # TODO:
-    # - nếu `--batch` thì đọc `data/test.json` và chạy batch
-    # - nếu có `--question` thì chạy một câu
-    # - lưu trace nếu user truyền `--trace-file`
-    # - in final answer hoặc summary ra terminal
-    raise NotImplementedError("Student TODO: finish the CLI entry point")
+    if args.batch:
+        test_file_path = Path(args.test_file)
+        output_dir = Path("src/artifacts/traces")
+        print(f"Running batch test using {test_file_path}...")
+        summary = assistant.run_batch(test_file_path, output_dir)
+        
+        metrics = summary["metrics"]
+        print("\n--- BATCH TEST SUMMARY ---")
+        print(f"Total:      {metrics['total']}")
+        print(f"Passed:     {metrics['passed']}")
+        print(f"Failed:     {metrics['failed']}")
+        print(f"Pass Rate:  {metrics['pass_rate']:.2%}")
+        print(f"Traces written to {output_dir}")
+        print("--------------------------")
+    elif args.question:
+        trace_file_path = Path(args.trace_file) if args.trace_file else None
+        print(f"Question: {args.question}")
+        res = assistant.ask(args.question, trace_file=trace_file_path)
+        print("\n--- FINAL ANSWER ---")
+        print(res["final_answer"])
+    else:
+        print("Please specify either --question or --batch. Use --help for usage details.")
 
 
 if __name__ == "__main__":
     main()
+
