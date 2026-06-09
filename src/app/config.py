@@ -54,7 +54,7 @@ class Settings:
                 "EMBEDDING_MODEL",
                 "sentence-transformers/all-MiniLM-L6-v2",
             ),
-            top_k=int(os.getenv("RAG_TOP_K", "4")),
+            top_k=int(os.getenv("RAG_TOP_K", "8")),
             google_api_key=os.getenv("GOOGLE_API_KEY"),
             openai_api_key=os.getenv("OPENAI_API_KEY"),
             openrouter_api_key=os.getenv("OPENROUTER_API_KEY"),

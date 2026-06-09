@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VinShop Multi-Agent Shopping Assistant</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Vanilla CSS Stylesheet -->
+  <link rel="stylesheet" href="index.css">
+</head>
+<body class="dark-mode">
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <i class="fa-solid fa-network-wired"></i>
+          <span>VinShop Agent</span>
+        </div>
+        <p class="tagline">Multi-Agent System Visualization</p>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <button class="nav-btn active" data-tab="chat">
+          <i class="fa-solid fa-comments"></i>
+          <span>Trợ lý Chat</span>
+        </button>
+        <button class="nav-btn" data-tab="database">
+          <i class="fa-solid fa-database"></i>
+          <span>Cơ sở Dữ liệu</span>
+        </button>
+        <button class="nav-btn" data-tab="policies">
+          <i class="fa-solid fa-book-bookmark"></i>
+          <span>Chính sách RAG</span>
+        </button>
+        <button class="nav-btn" data-tab="tests">
+          <i class="fa-solid fa-square-poll-vertical"></i>
+          <span>Đánh giá Batch</span>
+        </button>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="provider-badge">
+          <span class="dot pulse"></span>
+          <span id="active-provider">DeepSeek (Custom)</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Section: Chat Assistant -->
+      <section id="chat-tab" class="tab-pane active">
+        <div class="chat-layout">
+          <!-- Left: Chat Panel -->
+          <div class="chat-panel">
+            <div class="panel-header">
+              <h2>Trải nghiệm Khách hàng</h2>
+              <p>Hỏi đáp tự động bằng LangGraph Agent</p>
+            </div>
+            
+            <div class="chat-messages-container" id="chat-messages">
+              <div class="message system">
+                <div class="avatar"><i class="fa-solid fa-robot"></i></div>
+                <div class="content">
+                  <p>Xin chào! Tôi là Trợ lý mua sắm đa tác nhân của VinShop. Tôi có thể hỗ trợ tra cứu chính sách giao hàng/đổi trả hoặc kiểm tra tình trạng đơn hàng, voucher của bạn. Hãy nhập câu hỏi bên dưới nhé!</p>
+                  <div class="suggestions">
+                    <button class="suggest-btn" data-q="Chính sách hoàn trả hàng ra sao?">Chính sách hoàn trả</button>
+                    <button class="suggest-btn" data-q="Đơn hàng 2058 đang ở trạng thái nào?">Đơn hàng 2058</button>
+                    <button class="suggest-btn" data-q="Đơn hàng 1971 có được hoàn trả không?">Đơn 1971 hoàn trả?</button>
+                    <button class="suggest-btn" data-q="Voucher của tôi còn dùng được không?">Kiểm tra voucher</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <form class="chat-input-area" id="chat-form">
+              <input type="text" id="chat-input" placeholder="Nhập câu hỏi của bạn tại đây..." required autocomplete="off">
+              <button type="submit" id="send-btn">
+                <i class="fa-solid fa-paper-plane"></i>
+              </button>
+            </form>
+          </div>
+
+          <!-- Right: Graph Visualizer -->
+          <div class="graph-panel">
+            <div class="panel-header">
+              <h2>Sơ đồ Luồng Hoạt động (LangGraph)</h2>
+              <p>Mô phỏng các nút kích hoạt và trao đổi dữ liệu trong thời gian thực</p>
+            </div>
+            
+            <div class="graph-visualization-area">
+              <div class="graph-svg-container">
+                <!-- SVG Connections Background -->
+                <svg class="graph-connections" width="100%" height="100%">
+                  <defs>
+                    <marker id="arrow" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--border-color)" />
+                    </marker>
+                    <marker id="arrow-active" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent-color)" />
+                    </marker>
+                  </defs>
+                  
+                  <!-- Connections -->
+                  <!-- Start to Supervisor -->
+                  <path id="path-start-supervisor" d="" fill="none" stroke="var(--border-color)" stroke-width="2" marker-end="url(#arrow)" />
+                  <!-- Supervisor to Policy -->
+                  <path id="path-supervisor-policy" d="" fill="none" stroke="var(--border-color)" stroke-width="2" marker-end="url(#arrow)" />
+                  <!-- Supervisor to Data -->
+                  <path id="path-supervisor-data" d="" fill="none" stroke="var(--border-color)" stroke-width="2" marker-end="url(#arrow)" />
+                  <!-- Supervisor to Response -->
+                  <path id="path-supervisor-response" d="" fill="none" stroke="var(--border-color)" stroke-width="2" marker-end="url(#arrow)" />
+                  <!-- Policy to Data -->
+                  <path id="path-policy-data" d="" fill="none" stroke="var(--border-color)" stroke-width="2" marker-end="url(#arrow)" stroke-dasharray="4" />
+                  <!-- Policy to Response -->
+                  <path id="path-policy-response" d="" fill="none" stroke="var(--border-color)" stroke-width="2" marker-end="url(#arrow)" />
+                  <!-- Data to Response -->
+                  <path id="path-data-response" d="" fill="none" stroke="var(--border-color)" stroke-width="2" marker-end="url(#arrow)" />
+                </svg>
+
+                <!-- Start Node -->
+                <div class="node start-node" id="node-start">
+                  <div class="node-icon"><i class="fa-solid fa-play"></i></div>
+                  <div class="node-label">START</div>
+                </div>
+
+                <!-- Supervisor Node -->
+                <div class="node agent-node" id="node-supervisor" data-name="supervisor">
+                  <div class="node-icon"><i class="fa-solid fa-brain"></i></div>
+                  <div class="node-label">Supervisor</div>
+                  <div class="node-badge">Routing</div>
+                </div>
+
+                <!-- Policy Worker Node -->
+                <div class="node agent-node" id="node-policy" data-name="worker_1_policy">
+                  <div class="node-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+                  <div class="node-label">Policy Worker</div>
+                  <div class="node-badge">RAG search</div>
+                </div>
+
+                <!-- Data Lookup Worker Node -->
+                <div class="node agent-node" id="node-data" data-name="worker_2_data">
+                  <div class="node-icon"><i class="fa-solid fa-database"></i></div>
+                  <div class="node-label">Data Worker</div>
+                  <div class="node-badge">DB lookup</div>
+                </div>
+
+                <!-- Response Worker Node -->
+                <div class="node agent-node" id="node-response" data-name="worker_3_response">
+                  <div class="node-icon"><i class="fa-solid fa-file-signature"></i></div>
+                  <div class="node-label">Response Worker</div>
+                  <div class="node-badge">Synthesis</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Inspect Details Panel -->
+            <div class="inspector-panel" id="inspector">
+              <div class="inspector-header">
+                <h3><i class="fa-solid fa-circle-info"></i> Chi tiết thực thi nút</h3>
+                <span class="inspector-hint">Nhấp vào một nút ở trên để xem log</span>
+              </div>
+              <div class="inspector-body" id="inspector-content">
+                <div class="empty-state">Chưa có thông tin thực thi. Hãy gửi tin nhắn hoặc chọn một câu hỏi mẫu để bắt đầu.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Database Browser -->
+      <section id="database-tab" class="tab-pane">
+        <div class="panel-header page-header">
+          <h1>Cơ sở Dữ liệu Giả lập (Mock DB)</h1>
+          <p>Duyệt và tra cứu hồ sơ khách hàng, đơn hàng và danh sách voucher trong hệ thống</p>
+        </div>
+        
+        <div class="db-controls">
+          <div class="tab-selectors">
+            <button class="db-tab-btn active" data-db="customers">Khách hàng</button>
+            <button class="db-tab-btn" data-db="orders">Đơn hàng</button>
+            <button class="db-tab-btn" data-db="vouchers">Voucher</button>
+          </div>
+          <div class="db-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="db-search-input" placeholder="Tìm kiếm trong bảng...">
+          </div>
+        </div>
+        
+        <div class="table-container">
+          <table class="db-table" id="db-table">
+            <thead>
+              <tr id="table-headers"></tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Section: RAG Policies -->
+      <section id="policies-tab" class="tab-pane">
+        <div class="panel-header page-header">
+          <h1>Chỉ mục Tài liệu Chính sách (RAG Corpus)</h1>
+          <p>Các phân đoạn chính sách được chunking và lập chỉ mục trong cơ sở dữ liệu vector Chroma DB</p>
+        </div>
+        
+        <div class="policies-search-bar">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="policy-search" placeholder="Tìm kiếm tài liệu chính sách...">
+        </div>
+        
+        <div class="policies-grid" id="policies-grid">
+          <div class="loader-placeholder">
+            <i class="fa-solid fa-circle-notch fa-spin"></i> Đang tải dữ liệu chính sách...
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Batch Evaluation Dashboard -->
+      <section id="tests-tab" class="tab-pane">
+        <div class="panel-header page-header">
+          <h1>Đánh giá Chất lượng Đa Tác Nhân (Batch Evaluation)</h1>
+          <p>Bảng tổng quan kết quả kiểm định tự động trên bộ 22 câu hỏi mẫu của Lab</p>
+        </div>
+        
+        <!-- Metrics Panel -->
+        <div class="metrics-row">
+          <div class="metric-card bg-gradient-indigo">
+            <div class="metric-info">
+              <span class="title">Tổng số Test Cases</span>
+              <span class="value" id="metric-total">-</span>
+            </div>
+            <div class="metric-icon"><i class="fa-solid fa-list-check"></i></div>
+          </div>
+          
+          <div class="metric-card bg-gradient-emerald">
+            <div class="metric-info">
+              <span class="title">Test Passed</span>
+              <span class="value" id="metric-passed">-</span>
+            </div>
+            <div class="metric-icon"><i class="fa-solid fa-circle-check"></i></div>
+          </div>
+          
+          <div class="metric-card bg-gradient-rose">
+            <div class="metric-info">
+              <span class="title">Test Failed</span>
+              <span class="value" id="metric-failed">-</span>
+            </div>
+            <div class="metric-icon"><i class="fa-solid fa-circle-xmark"></i></div>
+          </div>
+          
+          <div class="metric-card bg-gradient-violet">
+            <div class="metric-info">
+              <span class="title">Tỉ lệ đạt (Pass Rate)</span>
+              <span class="value" id="metric-rate">-%</span>
+            </div>
+            <div class="metric-icon"><i class="fa-solid fa-chart-pie"></i></div>
+          </div>
+        </div>
+        
+        <!-- Controls & Table -->
+        <div class="suite-controls">
+          <h3>Danh sách Câu hỏi Kiểm định</h3>
+          <button class="run-suite-btn" id="run-suite-btn">
+            <i class="fa-solid fa-play"></i> Chạy lại toàn bộ Suite
+          </button>
+        </div>
+        
+        <div class="progress-container" id="test-progress-bar" style="display: none;">
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 0%;"></div>
+          </div>
+          <div class="progress-status">Đang chạy kiểm thử nền... Xin vui lòng đợi.</div>
+        </div>
+        
+        <div class="table-container">
+          <table class="tests-table">
+            <thead>
+              <tr>
+                <th>Mã</th>
+                <th>Câu hỏi mẫu</th>
+                <th>Định tuyến (Mong muốn)</th>
+                <th>Định tuyến (Thực tế)</th>
+                <th>Trạng thái (Mong muốn)</th>
+                <th>Trạng thái (Thực tế)</th>
+                <th>Kết quả</th>
+                <th>Chi tiết</th>
+              </tr>
+            </thead>
+            <tbody id="tests-table-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Trace Modal -->
+  <div class="modal-overlay" id="trace-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">Chi tiết vết thực thi - Test Case</h3>
+        <button class="close-modal-btn" id="close-modal"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-split">
+          <!-- Left side: Questions and Status details -->
+          <div class="modal-meta-pane">
+            <div class="meta-item">
+              <label>Câu hỏi:</label>
+              <p id="modal-meta-question"></p>
+            </div>
+            <div class="meta-item">
+              <label>Kết quả kiểm định:</label>
+              <div class="badge-row">
+                <span class="badge" id="modal-meta-route-ok">Route</span>
+                <span class="badge" id="modal-meta-status-ok">Status</span>
+              </div>
+            </div>
+            <div class="meta-item">
+              <label>Câu trả lời cuối cùng:</label>
+              <div class="answer-box" id="modal-meta-answer"></div>
+            </div>
+          </div>
+          <!-- Right side: Visualized Graph & inspect of trace -->
+          <div class="modal-trace-pane">
+            <h4>Nhật ký chi tiết các nút (Trace Log)</h4>
+            <div class="trace-timeline" id="modal-trace-timeline"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

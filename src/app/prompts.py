@@ -17,7 +17,8 @@ Hãy phân tích câu hỏi của khách hàng:
    - Đặt `needs_policy` thành false.
    - Đặt `needs_data` thành true.
    - Đặt `clarification_question` thành null.
-5. Nếu câu hỏi yêu cầu kiểm tra/đánh giá dữ liệu cụ thể dựa trên chính sách (ví dụ: "Đơn hàng 1971 có được hoàn trả không?", "Đơn hàng 2058 còn trong thời gian trả hàng không?"):
+   * Lưu ý đặc biệt: Đối với câu hỏi hỏi về số lượng voucher tối đa mà một khách hàng cụ thể có thể dùng trong tháng (ví dụ: "Khách hàng C001 tối đa dùng bao nhiêu voucher mỗi tháng?"), thông tin này được lưu trực tiếp trong cơ sở dữ liệu ở trường `max_voucher_per_month` của khách hàng đó. Do đó, chỉ cần định tuyến `data` (needs_data = true, needs_policy = false).
+5. Nếu câu hỏi yêu cầu kiểm tra/đánh giá dữ liệu cụ thể dựa trên chính sách (ví dụ: "Đơn hàng 1971 có được hoàn trả không?", "Đơn hàng 2058 còn trong thời gian trả hàng không?", "Đơn hàng 2058 có liên quan gì đến cửa sổ trả hàng 15 ngày không?"):
    - Đặt `status` thành "ok".
    - Đặt `needs_policy` thành true.
    - Đặt `needs_data` thành true.
